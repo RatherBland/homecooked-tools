@@ -1,14 +1,18 @@
 import urllib2
-from bs4 import BeautifulSoup, Comment
 import re
+from bs4 import BeautifulSoup, Comment
+from urlparse import urlparse
 
 # Initiate array to store discovered links
 urllist = []
 
-# Initate global variables, these will be inputted via cmd line arg in the future
+# Get start link to crawl, this will be returned by cmd arg in the future
 myurl = 'https://googleprojectzero.blogspot.com.au/2018/04/windows-exploitation-tricks-exploiting.html'
-host = 'https://googleprojectzero\.blogspot\.com\.au'
-base = 'https://googleprojectzero.blogspot.com.au'
+parsed_uri = urlparse(myurl)
+# Return the TLD from url
+base = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
+# Escape TLD for use with regex, i.e http://example\.com
+host = re.escape(base)
 
 # Generate regex string so to only crawl the desired application
 expressions_string = '''href=["']''' + host + '''(.[^"']+)["']'''
