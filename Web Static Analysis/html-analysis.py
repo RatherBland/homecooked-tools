@@ -6,10 +6,10 @@ from urlparse import urlparse
 # Initiate array to store discovered links
 urllist = []
 
-# Get start link to crawl, this will be returned by cmd arg in the future
+# Get start link to crawl, this will be returned by cmd line arg in the future
 myurl = 'https://googleprojectzero.blogspot.com.au/2018/04/windows-exploitation-tricks-exploiting.html'
 parsed_uri = urlparse(myurl)
-# Return the TLD from url
+# Return the TLD (Top Level Domain) from url
 base = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
 # Escape TLD for use with regex, i.e http://example\.com
 host = re.escape(base)
