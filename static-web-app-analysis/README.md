@@ -14,6 +14,7 @@ An attempt to automate aspects of static web application analysis.
 
 ## Planned Features
 
+- Implement multi-threading ti improve efficieny
 - Analyse CSS and JavaScript files automatically
 - Take screenshots of each page
 - Generate flow diagrams 
