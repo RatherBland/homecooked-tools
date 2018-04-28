@@ -8,9 +8,10 @@ input_url = 'https://googleprojectzero.blogspot.com.au/2018/04/windows-exploitat
 '''Initiate array to store discovered links'''
 urllist = []
 
-'''Initate  array store comments'''
+'''Initate array to store comments'''
 recon_comments = []
 
+'''Define get_tld to retrieve the top level domain from inputted URL'''
 def get_tld(our_url):
         parsed_uri = urlparse(our_url)
         
@@ -19,6 +20,7 @@ def get_tld(our_url):
         
         return base
 
+'''Define escape_host function to handle the regex string compatability of url'''
 def escape_host():
         
         '''Escape TLD for use with regex, i.e http://example\.com'''
@@ -37,6 +39,7 @@ def opener(myurl, cookiestring=False):
         response = opener.open(myurl).read()
         return response
 
+'''Define get_comments function to handle the discovery of comments in HTML code'''
 def get_comments(link):
         
         html = opener(link)
@@ -77,7 +80,3 @@ for reference in re.findall(expressions_string, opener(input_url), re.I):
                         print layered_link                                
                         
                         get_comments(layered_link)
-
-'''Print the discovered comments'''
-for comment in recon_comments:
-        print comment
