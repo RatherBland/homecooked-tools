@@ -14,7 +14,7 @@ An attempt to automate aspects of client-facing static, web application analysis
 
 ## Planned Features
 
-- Implement multi-threading ti improve efficieny
+- Implement multi-threading to improve efficieny
 - Analyse CSS and JavaScript files automatically
 - Take screenshots of each page
 - Generate flow diagrams 
