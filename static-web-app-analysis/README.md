@@ -1,5 +1,5 @@
 # Automated Web Application Static Analysis (WIP)
-An attempt to automate aspects of static web application analysis.
+An attempt to automate aspects of client-facing static, web application analysis.
 
 ## Required Libraries
  - urllib2
