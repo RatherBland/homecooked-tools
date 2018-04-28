@@ -2,12 +2,13 @@ import urllib2, re
 from bs4 import BeautifulSoup, Comment
 from urlparse import urlparse
 
+'''Get start link to crawl, this will be returned by cmd line arg in the future'''
 input_url = 'https://googleprojectzero.blogspot.com.au/2018/04/windows-exploitation-tricks-exploiting.html'
 
 '''Initiate array to store discovered links'''
 urllist = []
 
-'''Initate comments array'''
+'''Initate  array store comments'''
 recon_comments = []
 
 def get_tld(our_url):
@@ -25,7 +26,6 @@ def escape_host():
         
         return host
         
-
 '''Define opener function to handle requests'''
 def opener(myurl, cookiestring=False):
         
@@ -34,18 +34,12 @@ def opener(myurl, cookiestring=False):
         if cookiestring != False:
                 opener.addheaders = [('Cookie', '%d')] %(cookiestring)
                 
-                   
-        '''Get start link to crawl, this will be returned by cmd line arg in the future'''
-        # myurl = 'https://googleprojectzero.blogspot.com.au/2018/04/windows-exploitation-tricks-exploiting.html'
-        
         response = opener.open(myurl).read()
-        
         return response
 
 def get_comments(link):
         
         html = opener(link)
-        
         soup = BeautifulSoup(html,'html.parser')
 
         '''Return the HTML for page and determine comments'''
@@ -58,8 +52,6 @@ def get_comments(link):
                         
                         recon_comments.append(comments.extract())
                         
-       
-
 '''Generate regex string so to only crawl the desired application'''
 expressions_string = '''href=["']''' + escape_host() + '''(.[^"']+)["']'''
 
@@ -85,7 +77,6 @@ for reference in re.findall(expressions_string, opener(input_url), re.I):
                         print layered_link                                
                         
                         get_comments(layered_link)
-
 
 '''Print the discovered comments'''
 for comment in recon_comments:
