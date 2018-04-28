@@ -1,12 +1,14 @@
-import urllib2
-import re
+import urllib2, re
 from bs4 import BeautifulSoup, Comment
 from urlparse import urlparse
+
+input_url = 'https://googleprojectzero.blogspot.com.au/2018/04/windows-exploitation-tricks-exploiting.html'
 
 '''Initiate array to store discovered links'''
 urllist = []
 
-input_url = 'https://googleprojectzero.blogspot.com.au/2018/04/windows-exploitation-tricks-exploiting.html'
+'''Initate comments array'''
+recon_comments = []
 
 def get_tld(our_url):
         parsed_uri = urlparse(our_url)
@@ -39,7 +41,24 @@ def opener(myurl, cookiestring=False):
         response = opener.open(myurl).read()
         
         return response
+
+def get_comments(link):
         
+        html = opener(link)
+        
+        soup = BeautifulSoup(html,'html.parser')
+
+        '''Return the HTML for page and determine comments'''
+        for comments in soup.findAll(text=lambda text:isinstance(text, Comment)):
+                
+                print comments.extract()
+                
+                '''Ensure comments that already exist in the recon_comments array are not added again'''
+                if comments.extract() not in recon_comments:
+                        
+                        recon_comments.append(comments.extract())
+                        
+       
 
 '''Generate regex string so to only crawl the desired application'''
 expressions_string = '''href=["']''' + escape_host() + '''(.[^"']+)["']'''
@@ -49,34 +68,25 @@ for reference in re.findall(expressions_string, opener(input_url), re.I):
         
         '''Ensure that links that already exist in the urllist array are not added again'''
         if reference not in urllist and '#' not in reference:
+                
                 urllist.append(reference)
                 link = get_tld(input_url) + reference
-                print link                
+                print link
 
+                get_comments(link)
+                        
         for layered_reference in re.findall(expressions_string, opener(get_tld(input_url) + reference), re.I):
                 
                 '''Ensure that link does not contain '#', these links direct to local elements of a page'''      
                 if layered_reference not in urllist and '#' not in layered_reference:
+                        
                         urllist.append(layered_reference)
                         layered_link = get_tld(input_url) + layered_reference
                         print layered_link                                
-        
-'''Initate comments array'''
-recon_comments = []
-
-'''Begin scraping of comments from crawled links'''
-for page in urllist:
-        
-        '''Generate links to crawl from urllist array'''
-        html = opener(get_tld(input_url) + page)
-
-        soup = BeautifulSoup(html,'html.parser')
-        
-        '''Return the HTML for page and determine comments'''
-        for comments in soup.findAll(text=lambda text:isinstance(text, Comment)):
-                
-                '''Ensure comments that already exist in the recon_comments array are not added again'''
-                if comments.extract() not in recon_comments:
                         
-                        recon_comments.append(comments.extract())
-                        print comments.extract()
+                        get_comments(layered_link)
+
+
+'''Print the discovered comments'''
+for comment in recon_comments:
+        print comment
