@@ -1,5 +1,5 @@
 # Automated Web Application Static Analysis (WIP)
-An attempt to automate aspects of client-facing static, web application analysis.
+An attempt to automate aspects of client-facing, static, web application analysis.
 
 ## Required Libraries
  - urllib2
@@ -14,7 +14,7 @@ An attempt to automate aspects of client-facing static, web application analysis
 
 ## Planned Features
 
-- Implement multi-threading to improve efficieny
+- Implement multi-threading to improve efficiency
 - Analyse CSS and JavaScript files automatically
 - Take screenshots of each page
 - Generate flow diagrams 
