@@ -1,4 +1,5 @@
-import requests, time, pushbullet_key
+import requests, time
+import pushbullet_key # This is a personal library containing my PB key
 from pushbullet import Pushbullet
 
 USED_QUOTES = []
