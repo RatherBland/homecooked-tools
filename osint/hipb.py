@@ -1,14 +1,18 @@
 import requests
 import time
 import sys
-import mmap
 import argparse
+import json
+from collections import defaultdict
+import os
+import hashlib
 
 R = '\033[31m'  # red
-G = '\033[32m'  # green
+G = '\033[92m'  # green
 C = '\033[36m'  # cyan
 W = '\033[0m'  # white
 
+# Prepare command line arguments
 desc = "Automatically query the HaveIBeenPwned API with a list of emails to check for associated breaches."
 
 parser = argparse.ArgumentParser(description=desc)
@@ -19,41 +23,68 @@ parser.add_argument("--key", "-k", help="Your HaveIBeenPwned API key.", required
 args = parser.parse_args()
 
 url = "https://haveibeenpwned.com/api/v3/breachedaccount/"
-yes = []
-failed = []
+status = ".status"
+file_out = args.output
+file_in = args.file
+doc = defaultdict(int)
+
+hasher = hashlib.md5()
+with open(file_in, 'rb') as hashme:
+    buf = hashme.read()
+    hasher.update(buf)
+file_hash = hasher.hexdigest()
+
+with open(file_in, 'r') as f:
+    if os.path.exists(status):
+        with open(status, "r") as stat:
+            stat_data = stat.readline()
+            if len(stat_data) > 0:
+                stat_hash = stat_data.split(",")[0]
+                # Check value in .stats files is a number - not empty value
+                if file_hash == stat_hash:
+                    stat_val = stat_data.split(",")[1]
+                    if stat_val.isnumeric():
+                        print(C + "[*] Starting results at previous position: {}".format(stat_val) + W)
+                        for lineno, line in enumerate(f):
+                            doc[lineno] = line
+
+                        for i in range(int(stat_val)):
+                            del doc[i]
+                    else:
+                        for lineno, line in enumerate(f):
+                            doc[lineno] = line
+                else:
+                    os.remove(status)
+            else:
+                for lineno, line in enumerate(f):
+                    doc[lineno] = line
+            stat.close()
+    else:
+        for lineno, line in enumerate(f):
+            doc[lineno] = line
+
+lines = list(doc.keys())[-1]
 
 
-file_name = args.output
+def check_email(email, counter):
 
+    sys.stdout.write("\r {} of {} emails checked ({}%)\r".format(counter, lines, round(counter * 100 / lines, 1)))
 
-def mapcount():
-    f = open(args.file, "r+")
-    buf = mmap.mmap(f.fileno(), 0)
-    lines = 0
-    readline = buf.readline
-    while readline():
-        lines += 1
-    return lines
-
-
-lines = mapcount()
-
-f = open(args.file, "r+")
-
-counter = 0
-
-
-def check_email(email):
-    global counter
-    counter += 1
-    sys.stdout.write("\r{} of {} emails checked ({}%)\r".format(counter, lines, round(counter * 100 / lines, 1)))
     try:
-        response = requests.get(url + email, headers={'hibp-api-key': args.key})
+        response = requests.get(url + email, headers={'hibp-api-key': args.key}, params={'truncateResponse': 'false'}, timeout=10)
 
         if response.status_code is 200:
             print(G + "[+] Dumps found for {}".format(email) + W)
-            yes.append(email)
-            if args.output is not None:
+            json_out = response.content.decode('utf-8', 'ignore')
+            simple_out = json.loads(json_out)
+            for item in simple_out:
+                print(
+                        G + '\t-' + C + ' Breach      : ' + W + str(item['Title']) + '\n'
+                        + G + '\t-' + C + ' Domain      : ' + W + str(item['Domain']) + '\n'
+                        + G + '\t-' + C + ' Date        : ' + W + str(item['BreachDate']) + '\n'
+                        + '\t----------------------------\n'
+                )
+            if file_out is not None:
                 store = open(file_name, "a+")
                 store.write(email + "\r\n")
                 store.close()
@@ -61,18 +92,18 @@ def check_email(email):
         elif response.status_code is 404:
             print(C + "[-] No Dump found for {}".format(email) + W)
 
+        with open(".status", "w") as f:
+                f.write("{},{}".format(file_hash, str(counter)))
+                f.close()
 
-        time.sleep(1.45) # Required because of API rate limiting to 40 requests per 60 seconds
+        time.sleep(1.45) # Required because of API rate limiting to 40 requests per minute.  
     except requests.exceptions.ConnectionError:
-        failed.append(email)
         print(R + "[!] Connection refused: status {}".format(response.status_code) + W)
 
-
-for email in f.readlines():
-    check_email(email.strip())
-if len(failed) > 0:
-    for email in failed:
-        check_email(email)
-print(yes)
-print(failed)
+for num, line in doc.items():
+    check_email(line.rstrip(), num)
+    
+os.remove(status)
 f.close()
+
+
