@@ -1,4 +1,5 @@
 import requests
+from requests.adapters import HTTPAdapter
 import time
 import sys
 import argparse
@@ -6,6 +7,9 @@ import json
 from collections import defaultdict
 import os
 import hashlib
+
+s = requests.Session()
+s.mount('https://', HTTPAdapter(max_retries=10))
 
 R = '\033[31m'  # red
 G = '\033[92m'  # green
@@ -82,11 +86,11 @@ def check_email(email, counter):
 
     try:
         """Attempt request to API parsing email as POST data, with API key as header. truncateResponse set to false in headers to return for JSON response, instead of yes/no response."""
-        response = requests.get(url + email, headers={'hibp-api-key': args.key}, params={'truncateResponse': 'false'},
+        response = s.get(url + email, headers={'hibp-api-key': args.key}, params={'truncateResponse': 'false'},
                                 timeout=10)
 
         """Status 200 indicates dump for email found. Parse JSON response to output Org breached, and date."""
-        if response.status_code is 200:
+        if response.status_code == 200:
             print(G + "[+] Dumps found for {}".format(email) + W)
             json_out = response.content.decode('utf-8', 'ignore')
             simple_out = json.loads(json_out)
@@ -102,7 +106,7 @@ def check_email(email, counter):
                 store.write(email + "\r\n")
                 store.close()
 
-        elif response.status_code is 404:
+        elif response.status_code == 404:
             print(C + "[-] No Dump found for {}".format(email) + W)
 
         """Update status file with progress of file enuemeration so we don't need to start from the beginning in the event execution is cancelled/fails early"""
